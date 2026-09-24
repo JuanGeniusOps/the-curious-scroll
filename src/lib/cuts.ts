@@ -33,15 +33,16 @@ export const animateCard = (tl: gsap.core.Timeline, root: Element, start: number
 
   const chars = all("[data-char]");
   if (chars.length) {
-    tl.fromTo(
+    // Set the hidden state up front: a staggered fromTo only applies its "from" values
+    // to letters whose delay has started, so the outer letters would show too early.
+    gsap.set(chars, { autoAlpha: 0, yPercent: 70 });
+    tl.to(
       chars,
-      { autoAlpha: 0, yPercent: 70 },
       {
         autoAlpha: 1,
         yPercent: 0,
         duration: span * 0.08,
         ease: "power1.out",
-        immediateRender: true,
         stagger: (_i: number, el: HTMLElement) => Number(el.dataset.dist ?? 0) * span * 0.035,
       },
       start + span * 0.12,
