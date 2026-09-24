@@ -1,26 +1,150 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-jost), "Futura", sans-serif;
+  --font-type: var(--font-courier), "Courier New", monospace;
+  --font-serif: var(--font-caslon), Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------- Palettes (validated in /research) ---------- */
+:root {
+  --cream: #f2e8d5;
+  --ink: #1c1b19;
+
+  --gb-pink: #f1bbba;
+  --gb-blush: #f7dad5;
+  --gb-purple: #6b3e75;
+  --gb-plum: #3e2344;
+  --gb-red: #a8323e;
+  --gb-gold: #c9a45c;
+  --gb-blue: #a9c6d6;
+
+  --mk-khaki: #c2b280;
+  --mk-forest: #3e5641;
+  --mk-mustard: #d4a017;
+  --mk-rust: #a0522d;
+  --mk-sky: #9fb8c8;
+  --mk-paper: #ede3c4;
+  --mk-ink: #2a2a22;
+
+  --fd-cream: #f2e8d5;
+  --fd-ink: #1c1b19;
+  --fd-red: #c23b22;
+  --fd-teal: #2f6f73;
+  --fd-teal-deep: #1f4f52;
+  --fd-ochre: #d9a441;
+  --fd-salmon: #e3a28c;
+  --fd-mint: #b9cfc4;
+}
+
+/* Each palette exposes the same semantic tokens: --bg, --fg, --accent */
+.palette-cream,
+[data-palette="cream"] { --bg: var(--cream); --fg: var(--ink); --accent: var(--fd-red); }
+.palette-budapest,
+[data-palette="budapest"] { --bg: var(--gb-pink); --fg: var(--gb-plum); --accent: var(--gb-red); }
+.palette-budapest-card { --bg: var(--gb-purple); --fg: var(--gb-pink); --accent: var(--gb-gold); }
+.palette-moonrise,
+[data-palette="moonrise"] { --bg: var(--mk-forest); --fg: var(--mk-paper); --accent: var(--mk-mustard); }
+/* rust on mustard is ~2.5:1, forest reaches the 3:1 large-text bar */
+.palette-moonrise-card { --bg: var(--mk-mustard); --fg: var(--mk-ink); --accent: var(--mk-forest); }
+.palette-dispatch,
+[data-palette="dispatch"] { --bg: var(--fd-mint); --fg: var(--fd-ink); --accent: var(--fd-red); }
+/* deepened teal so the ochre numeral clears 4:1 */
+.palette-dispatch-card { --bg: var(--fd-teal-deep); --fg: var(--fd-cream); --accent: var(--fd-ochre); }
+.palette-dispatch-print { --bg: var(--fd-cream); --fg: var(--fd-ink); --accent: var(--fd-red); }
+
+html {
+  background: var(--bg);
+  color: var(--fg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.sr-only-focusable:not(:focus) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- Scene system ----------
+   The page is a projector: each chapter is a tall "segment" that only provides scroll length.
+   Its scene is a fixed full-viewport frame, shown only while its segment is under the playhead.
+   Swapping `visibility` gives a dry cut (never a fade) between chapters. */
+.segment { position: relative; }
+.scene {
+  outline: none; /* programmatic focus target after a chapter jump */
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .segment { height: calc(var(--length, 3) * 100svh); }
+  .scene {
+    position: fixed;
+    inset: 0;
+    visibility: hidden;
+  }
+  .scene.is-active { visibility: visible; }
+  /* Starts hidden until its cut; GSAP's inline autoAlpha takes over after hydration. */
+  .motion-hidden { visibility: hidden; opacity: 0; }
+}
+
+/* Reduced motion: scenes sit in normal flow, fully composed, no scroll choreography. */
+@media (prefers-reduced-motion: reduce) {
+  .scene { position: relative; min-height: 100svh; }
+  .motion-only { display: none !important; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .static-only { display: none !important; }
+}
+
+/* ---------- Film texture ---------- */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.09;
+  background-size: 180px 180px;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .grain { animation: grain 0.8s steps(1) infinite; }
+}
+@keyframes grain {
+  0% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-7%, 3%, 0); }
+  25% { transform: translate3d(4%, -9%, 0); }
+  37% { transform: translate3d(-11%, -4%, 0); }
+  50% { transform: translate3d(8%, 6%, 0); }
+  62% { transform: translate3d(-3%, 10%, 0); }
+  75% { transform: translate3d(10%, -2%, 0); }
+  87% { transform: translate3d(-6%, -10%, 0); }
+}
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 58%, rgb(20 12 10 / 0.28) 100%);
+}
+
+/* ---------- Title cards (intertitles) ---------- */
+.intertitle-frame {
+  border: 2px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 6px;
 }
